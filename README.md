@@ -8,52 +8,120 @@ Design and implement a system where a user can input dimensions of a cylinder (r
 and the system calculates its volume by invoking a Python function using the function-calling capabilities of an LLM.
 
 ### DESIGN STEPS:
+```
 1.Import necessary libraries, including OpenAI for LLM integration and math for mathematical operations.
-2.Define a Python function to calculate the volume of a cylinder based on its radius and height.
+2.Define a Python function to calculate the simple interest.
 3.Integrate the function into an LLM-based chat completion system with function-calling capabilities.
-
+```
 ### PROGRAM:
 ```
+import os
 import openai
-import math
 
-# Define the function to calculate the volume of a cylinder
-def calculate_cylinder_volume(radius, height):
-    return math.pi * radius ** 2 * height
+from dotenv import load_dotenv, find_dotenv
+_ = load_dotenv(find_dotenv()) # read local .env file
+openai.api_key = os.environ['OPENAI_API_KEY']
 
-# Example function to simulate OpenAI's function-calling integration
-def mock_llm_function_call(function_name, arguments):
-    if function_name == "calculate_cylinder_volume":
-        return {"volume": calculate_cylinder_volume(**arguments)}
-    else:
-        return {"error": "Function not recognized"}
+import json
 
-# Simulate user interaction and LLM response
-def main():
-    user_message = "What is the volume of a cylinder with radius 5 and height 10?"
-    print(f"User: {user_message}")
+def get_simple_interest(principal, rate, time, unit="years"):
+    """Return simple interest calculation in JSON format"""
+    si = (principal * rate * time) / 100
     
-    # Simulated LLM recognizing the intent and invoking the function
-    function_name = "calculate_cylinder_volume"
-    arguments = {"radius": 5, "height": 10}
+    interest_info = {
+        "concept": "Simple Interest",
+        "principal": principal,
+        "rate (%)": rate,
+        "time": f"{time} {unit}",
+        "formula": "(P × R × T) / 100",
+        "simple_interest": si,
+        "total_amount": principal + si
+    }
     
-    # Mocking LLM function calling response
-    response = mock_llm_function_call(function_name, arguments)
-    print(f"LLM Function Output: {response}")
+    return json.dumps(interest_info)
 
-    # Returning output to user
-    if "volume" in response:
-        print(f"Bot: The volume of the cylinder is {response['volume']:.2f}.")
-    else:
-        print("Bot: Sorry, there was an error processing your request.")
-
-# Execute the main function
-if __name__ == "__main__":
-    main()
 ```
 
+```
+# Call the ChatCompletion endpoint
+response = openai.ChatCompletion.create(
+    # OpenAI Updates: As of June 2024, we are now using the GPT-3.5-Turbo model
+    model="gpt-3.5-turbo",
+    messages=messages,
+    functions=functions
+)
+
+# define a function
+functions = [
+    {
+        "name": "get_simple_interest",
+        "description": "Calculate the simple interest for given principal, rate, and time",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "principal": {
+                    "type": "number",
+                    "description": "The principal amount, e.g., 1000"
+                },
+                "rate": {
+                    "type": "number",
+                    "description": "The rate of interest (in percentage), e.g., 5"
+                },
+                "time": {
+                    "type": "number",
+                    "description": "The time duration for which interest is calculated"
+                },
+                "unit": {
+                    "type": "string",
+                    "enum": ["days", "months", "years"],
+                    "description": "The unit of time"
+                }
+            },
+            "required": ["principal", "rate", "time"]
+        },
+    }
+]
+
+```
+```
+print(response)
+```
+```
+response_message = response["choices"][0]["message"]
+response_message
+
+```
+```
+response_message["content"]
+response_message["function_call"]
+json.loads(response_message["function_call"]["arguments"])
+```
+```
+messages = [
+    {
+        "role": "user",
+        "content": "Calculate the simple interest for principal 1000, rate 5%, and time 2 years"
+    }
+]
+
+response = openai.ChatCompletion.create(
+    model="gpt-3.5-turbo",
+    messages=messages,
+    functions=functions,
+    function_call={"name": "get_simple_interest"},
+)
+
+print(response)
+
+```
 ### OUTPUT:
-![image](https://github.com/user-attachments/assets/1532f42f-368a-4d28-bc5d-7827345563e5)
+
+<img width="754" height="908" alt="image" src="https://github.com/user-attachments/assets/b8193d34-73a9-4a37-bd1b-6d89d90660a1" />
+<img width="611" height="213" alt="image" src="https://github.com/user-attachments/assets/6b4284ca-97d9-45a4-8cdb-a1f6c3138ad8" />
+<img width="583" height="651" alt="image" src="https://github.com/user-attachments/assets/064dd859-0079-430e-9ce9-1d023da91963" />
+<img width="732" height="722" alt="image" src="https://github.com/user-attachments/assets/550c7e75-ef36-42c3-bfea-c488c2570ff9" />
+<img width="701" height="581" alt="image" src="https://github.com/user-attachments/assets/23cebaf0-f01f-42ee-b399-d334156262a6" />
+
 
 ### RESULT:
-Hence integration of a Mathematical Calulations with a Chat Completion System using LLM Function-Calling.
+The integration of the simple interest calculation function with the LLM-based chat completion system was successfully implemented.
